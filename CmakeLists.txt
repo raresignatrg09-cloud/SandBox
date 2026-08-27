@@ -1,0 +1,30 @@
+cmake_minimum_required(VERSION 3.13)
+
+project(main1 LANGUAGES CXX)
+
+set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+set(CMAKE_CXX_EXTENSIONS OFF)
+
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+
+add_subdirectory("thirdParty/SFML")
+
+file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
+)
+
+add_executable(main1 ${MY_SOURCES})
+
+target_include_directories(main1 PRIVATE
+    "${CMAKE_CURRENT_SOURCE_DIR}/include"
+)
+
+target_compile_definitions(main1 PRIVATE
+    RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
+)
+
+target_link_libraries(main1 PRIVATE
+    SFML::Graphics
+    SFML::Audio
+)
