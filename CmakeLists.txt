@@ -1,30 +1,50 @@
-cmake_minimum_required(VERSION 3.13)
+cmake_minimum_required(VERSION 3.22)
 
-project(main1 LANGUAGES CXX)
+project(SandBox LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded")
+# SFML
+add_subdirectory(thirdParty/SFML)
 
-add_subdirectory("thirdParty/SFML")
+# Dear ImGui
+add_library(imgui STATIC
+    thirdParty/imgui/imgui.cpp
+    thirdParty/imgui/imgui_draw.cpp
+    thirdParty/imgui/imgui_tables.cpp
+    thirdParty/imgui/imgui_widgets.cpp
+)
 
+target_include_directories(imgui PUBLIC
+    thirdParty/imgui
+)
+
+# ImGui-SFML
+set(IMGUI_DIR "${CMAKE_CURRENT_SOURCE_DIR}/thirdParty/imgui")
+set(IMGUI_SFML_FIND_SFML OFF)
+
+add_subdirectory(thirdParty/imgui-sfml)
+
+# Application
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS
     "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp"
 )
 
-add_executable(main1 ${MY_SOURCES})
+add_executable(SandBox ${MY_SOURCES})
 
-target_include_directories(main1 PRIVATE
+target_include_directories(SandBox PRIVATE
     "${CMAKE_CURRENT_SOURCE_DIR}/include"
 )
 
-target_compile_definitions(main1 PRIVATE
+target_compile_definitions(SandBox PRIVATE
     RESOURCES_PATH="${CMAKE_CURRENT_SOURCE_DIR}/resources/"
 )
 
-target_link_libraries(main1 PRIVATE
+target_link_libraries(SandBox PRIVATE
     SFML::Graphics
     SFML::Audio
+    imgui
+    ImGui-SFML::ImGui-SFML
 )

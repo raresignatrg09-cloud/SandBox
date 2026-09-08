@@ -1,17 +1,8 @@
+#pragma once
+
 #include <SFML/Graphics.hpp>
-#include <vector>
-
-enum class CellType
-{
-	Sand,
-	Air
-};
-
-struct Cell
-{
-	CellType type;
-
-};
+#include <headers/Grid.h>
+#include <config.hpp>
 
 class Game
 {
@@ -26,7 +17,9 @@ private:
 
 private:
 	sf::RenderWindow m_window;
-	std::vector<Cell> m_grid;
+	sf::Clock deltaClock;
 
-	sf::Vector2i m_previousMouseCell;
+	Grid m_grid;
+	CellType currentCellType = CellType::Sand;
+	int brushSize = 3;
 };

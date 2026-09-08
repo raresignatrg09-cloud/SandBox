@@ -1,26 +1,16 @@
-#pragma once
 #include <headers/Game.h>
-#include <config.hpp>
-#include <helperFunctions.hpp>
-#include <cmath>
-#include <algorithm>
+#include <print>
+#include <imgui.h>
+#include <imgui-SFML.h>
 
 Game::Game()
-	:m_window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_WIDTH }), TITLE)
+	:m_window(sf::VideoMode({ WINDOW_WIDTH, WINDOW_HEIGHT }), TITLE),
+	m_grid(ROWS, COLS)
 {
 	m_window.setFramerateLimit(60);
 
-	m_grid.resize(ROWS * COLS);
-
-	for (int row = 0; row < ROWS; ++row)
-	{
-		for (int col = 0; col < COLS; ++col)
-		{
-			m_grid[getVectorIndex(row, col)].type = CellType::Air;
-		}
-	}
-
-	m_grid[getVectorIndex(1, 1)].type = CellType::Sand;
+	if (!ImGui::SFML::Init(m_window))
+		throw std::runtime_error("Failed to initialize ImGui-SFML");
 }
 
 void Game::run()
@@ -28,19 +18,60 @@ void Game::run()
 	while (m_window.isOpen())
 	{
 		eventHandling();
+
+		// Update ImGui
+		ImGui::SFML::Update(m_window, deltaClock.restart());
+
 		update();
 		draw();
 	}
+
+	ImGui::SFML::Shutdown();
 }
 
 void Game::eventHandling()
 {
 	while (auto event = m_window.pollEvent())
 	{
+		ImGui::SFML::ProcessEvent(m_window, *event);
+
 		if (event->is<sf::Event::Closed>())
 			m_window.close();
 
-		
+		if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
+		{
+			switch (keyPressed->code)
+			{
+			case sf::Keyboard::Key::Escape:
+				m_window.close();
+				break;
+			case sf::Keyboard::Key::C:
+				m_grid.clearGrid();
+				break;
+			case sf::Keyboard::Key::Num1:
+				currentCellType = CellType::Sand;
+				break;
+			case sf::Keyboard::Key::Num2:
+				currentCellType = CellType::Water;
+				break;
+			case sf::Keyboard::Key::Num3:
+				currentCellType = CellType::Stone;
+				break;
+			case sf::Keyboard::Key::Num4:
+				currentCellType = CellType::Air;
+				break;
+			case sf::Keyboard::Key::Num5:
+				currentCellType = CellType::Acid;
+				break;
+			case sf::Keyboard::Key::Num6:
+				currentCellType = CellType::Lava;
+				break;
+			}
+
+			std::println("Current Cell Type: {}", getCellTypeName(currentCellType));
+
+			m_grid.setCurrentCellType(currentCellType);
+		}
 	}
 }
 
@@ -48,72 +79,103 @@ void Game::draw()
 {
 	m_window.clear();
 
-	sf::RectangleShape shape({ CELL_SIZE,CELL_SIZE });
-	
-	for (int row = 0; row < ROWS; ++row)
+	m_grid.draw(m_window);
+
+#pragma region ImGui
+	ImGui::Begin("SandBox");
+
+	ImGui::Text(
+		"Current Cell: %s",
+		getCellTypeName(currentCellType).c_str()
+	);
+
+	ImGui::Separator();
+
+	if (ImGui::Button("Sand"))
 	{
-		for (int col = 0; col < COLS; ++col)
-		{
-			CellType& tile = m_grid[getVectorIndex(row, col)].type;
-
-			if (tile == CellType::Air) continue;
-
-			switch (tile)
-			{
-			case CellType::Sand:
-				shape.setFillColor(sf::Color::Yellow);
-				break;
-			default:
-				shape.setFillColor(sf::Color::Black);
-				break;
-			}
-
-			shape.setPosition({ (float)col*CELL_SIZE,(float)row*CELL_SIZE });
-
-			m_window.draw(shape);
-		}
+		currentCellType = CellType::Sand;
+		m_grid.setCurrentCellType(currentCellType);
 	}
+
+	 
+
+	if (ImGui::Button("Water"))
+	{
+		currentCellType = CellType::Water;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Stone"))
+	{
+		currentCellType = CellType::Stone;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Air"))
+	{
+		currentCellType = CellType::Air;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Acid"))
+	{
+		currentCellType = CellType::Acid;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Lava"))
+	{
+		currentCellType = CellType::Lava;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Mercury"))
+	{
+		currentCellType = CellType::Mercury;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Wood"))
+	{
+		currentCellType = CellType::Wood;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Sawdust"))
+	{
+		currentCellType = CellType::Sawdust;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+
+	if (ImGui::Button("Salt"))
+	{
+		currentCellType = CellType::Salt;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+	if (ImGui::Button("Coal"))
+	{
+		currentCellType = CellType::Coal;
+		m_grid.setCurrentCellType(currentCellType);
+	}
+	if (ImGui::Button("Clear Grid"))
+	{
+		m_grid.clearGrid();
+	}
+	if (ImGui::SliderInt("Brush Size", &brushSize, 1, 10))
+	{
+		m_grid.setBrushSize(brushSize);
+	}
+
+	ImGui::End();
+
+	// Render ImGui
+	ImGui::SFML::Render(m_window);
+#pragma endregion
 
 	m_window.display();
 }
 
 void Game::update()
 {
-	if (sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
-	{
-		sf::Vector2i mousePos = sf::Mouse::getPosition(m_window);
-
-		int mouseRow = mousePos.y / CELL_SIZE;
-		int mouseCol = mousePos.x / CELL_SIZE;
-
-		const int radius = 3;
-		for (int row = 0; row < ROWS; ++row)
-		{
-			for (int col = 0; col < COLS; ++col)
-			{
-				if (row < 0 || row >= ROWS ||
-					col < 0 || col >= COLS)
-					continue;
-
-				int distance = std::abs(mouseRow - row) + std::abs(mouseCol - col);
-
-				if (distance < radius)
-					m_grid[getVectorIndex(row, col)].type = CellType::Sand;
-			}
-		}
-	}
-	
-	for (int row = ROWS - 2; row >= 0; --row)
-	{
-		for (int col = 0; col < COLS; ++col)
-		{
-			Cell& cell = m_grid[getVectorIndex(row, col)];
-			Cell& belowCell = m_grid[getVectorIndex(row + 1, col)];
-
-			if (cell.type == CellType::Sand && belowCell.type == CellType::Air)
-			{
-				std::swap(cell.type, belowCell.type);
-			}
-		}
-	}
+	m_grid.update(m_window);
 }
