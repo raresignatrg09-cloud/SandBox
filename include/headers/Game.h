@@ -1,6 +1,18 @@
 #include <SFML/Graphics.hpp>
 #include <vector>
 
+enum class CellType
+{
+	Sand,
+	Air
+};
+
+struct Cell
+{
+	CellType type;
+
+};
+
 class Game
 {
 public:
@@ -14,5 +26,7 @@ private:
 
 private:
 	sf::RenderWindow m_window;
-	std::vector<sf::RectangleShape> m_grid;
+	std::vector<Cell> m_grid;
+
+	sf::Vector2i m_previousMouseCell;
 };
