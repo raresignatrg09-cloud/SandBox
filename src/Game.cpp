@@ -37,47 +37,12 @@ void Game::eventHandling()
 
 		if (event->is<sf::Event::Closed>())
 			m_window.close();
-
-		if (const auto* keyPressed = event->getIf<sf::Event::KeyPressed>())
-		{
-			switch (keyPressed->code)
-			{
-			case sf::Keyboard::Key::Escape:
-				m_window.close();
-				break;
-			case sf::Keyboard::Key::C:
-				m_grid.clearGrid();
-				break;
-			case sf::Keyboard::Key::Num1:
-				currentCellType = CellType::Sand;
-				break;
-			case sf::Keyboard::Key::Num2:
-				currentCellType = CellType::Water;
-				break;
-			case sf::Keyboard::Key::Num3:
-				currentCellType = CellType::Stone;
-				break;
-			case sf::Keyboard::Key::Num4:
-				currentCellType = CellType::Air;
-				break;
-			case sf::Keyboard::Key::Num5:
-				currentCellType = CellType::Acid;
-				break;
-			case sf::Keyboard::Key::Num6:
-				currentCellType = CellType::Lava;
-				break;
-			}
-
-			std::println("Current Cell Type: {}", getCellTypeName(currentCellType));
-
-			m_grid.setCurrentCellType(currentCellType);
-		}
 	}
 }
 
 void Game::draw()
 {
-	m_window.clear();
+	m_window.clear(sf::Color::Black);
 
 	m_grid.draw(m_window);
 
@@ -91,79 +56,43 @@ void Game::draw()
 
 	ImGui::Separator();
 
-	if (ImGui::Button("Sand"))
-	{
-		currentCellType = CellType::Sand;
-		m_grid.setCurrentCellType(currentCellType);
-	}
+	auto setButton = [&](const char* label, CellType type)
+		{
+			if (ImGui::Button(label))
+			{
+				currentCellType = type;
+				m_grid.setCurrentCellType(currentCellType);
+			}
+		};
 
-	 
+	setButton("Sand", CellType::Sand);
+	setButton("Water", CellType::Water);
+	setButton("Stone", CellType::Stone);
+	setButton("Acid", CellType::Acid);
+	setButton("Lava", CellType::Lava);
+	setButton("Mercury", CellType::Mercury);
+	setButton("Wood", CellType::Wood);
+	setButton("Sawdust", CellType::Sawdust);
+	setButton("Salt", CellType::Salt);
+	setButton("Coal", CellType::Coal);
+	setButton("Smoke", CellType::Smoke);
+	setButton("Fire", CellType::Fire);
+	setButton("Ice", CellType::Ice);
 
-	if (ImGui::Button("Water"))
+	setButton("Eraser", CellType::Air);
+	
+	bool seeTemperature = m_grid.getSeeTemperature();
+	if (ImGui::Checkbox("See Temperature", &seeTemperature))
 	{
-		currentCellType = CellType::Water;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Stone"))
-	{
-		currentCellType = CellType::Stone;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Air"))
-	{
-		currentCellType = CellType::Air;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Acid"))
-	{
-		currentCellType = CellType::Acid;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Lava"))
-	{
-		currentCellType = CellType::Lava;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Mercury"))
-	{
-		currentCellType = CellType::Mercury;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Wood"))
-	{
-		currentCellType = CellType::Wood;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Sawdust"))
-	{
-		currentCellType = CellType::Sawdust;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-
-	if (ImGui::Button("Salt"))
-	{
-		currentCellType = CellType::Salt;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-	if (ImGui::Button("Coal"))
-	{
-		currentCellType = CellType::Coal;
-		m_grid.setCurrentCellType(currentCellType);
-	}
-	if (ImGui::Button("Clear Grid"))
-	{
-		m_grid.clearGrid();
+		m_grid.setSeeTemperature(seeTemperature);
 	}
 	if (ImGui::SliderInt("Brush Size", &brushSize, 1, 10))
 	{
 		m_grid.setBrushSize(brushSize);
+	}
+	if (ImGui::Button("Clear Grid"))
+	{
+		m_grid.clearGrid();
 	}
 
 	ImGui::End();
