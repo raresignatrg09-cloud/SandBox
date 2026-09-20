@@ -131,10 +131,10 @@ Lava + cooling → Stone
 Temperature is also transferred between neighboring cells.
 
 Normal:
-![Simulation](resources/screenshots/Screenshot 1.png)
+![SandBox](resources/screenshots/Screenshot 1.png)
 
 With heat vision:
-![Simulation](resources/screenshots/Screenshot 2.png)
+![SandBox](resources/screenshots/Screenshot 2.png)
 
 The exact structure may vary depending on the project setup.
 
