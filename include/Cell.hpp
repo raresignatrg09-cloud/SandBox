@@ -17,6 +17,7 @@ enum class CellType
 	Smoke,
 	Fire,
 	Ice,
+	Magma,
 	Air
 };
 
@@ -38,6 +39,7 @@ inline std::string getCellTypeName(CellType type)
 		case CellType::Smoke:   return "Smoke";
 		case CellType::Fire:    return "Fire";
 		case CellType::Ice:     return "Ice";
+		case CellType::Magma:   return "Magma";
     }
 
     return "Unknown";
@@ -47,11 +49,14 @@ struct Cell
 {
     CellType type = CellType::Air;
     sf::Color color = sf::Color::Black;
-	float temperature = 20.0f; // Default temperature in Celsius
+	float temperature = 20.0f;
 
     Cell() = default;
 
-    Cell(CellType t) : type(t) {}
+	Cell(CellType t)
+	{
+		setType(t);
+	}
 
     void setType(CellType t)
     {
@@ -62,43 +67,43 @@ struct Cell
 		switch (type)
 		{
 		case CellType::Sand:
-			color=sandColorPalette[std::rand() % sandColorPalette.size()];
+			color = sandColorPalette[std::rand() % sandColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for sand
 			break;
 		case CellType::Stone:
-			color=stoneColorPalette[std::rand() % stoneColorPalette.size()];
+			color = stoneColorPalette[std::rand() % stoneColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for stone
 			break;
 		case CellType::Water:
-			color=waterColorPalette[std::rand() % waterColorPalette.size()];
+			color = waterColorPalette[std::rand() % waterColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for water
 			break;
 		case CellType::Acid:
-			color=acidColorPalette[std::rand() % acidColorPalette.size()];
+			color = acidColorPalette[std::rand() % acidColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for acid
 			break;
 		case CellType::Lava:
-			color=lavaColorPalette[std::rand() % lavaColorPalette.size()];
+			color = lavaColorPalette[std::rand() % lavaColorPalette.size()];
 			temperature = 2000.0f; // Set high temperature for lava
 			break;
 		case CellType::Mercury:
-			color=mercuryColorPalette[std::rand() % mercuryColorPalette.size()];
+			color = mercuryColorPalette[std::rand() % mercuryColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for mercury
 			break;
 		case CellType::Wood:
-			color=woodColorPalette[std::rand() % woodColorPalette.size()];
+			color = woodColorPalette[std::rand() % woodColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for wood
 			break;
 		case CellType::Sawdust:
-			color=sawdustColorPalette[std::rand() % sawdustColorPalette.size()];
+			color = sawdustColorPalette[std::rand() % sawdustColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for sawdust
 			break;
 		case CellType::Salt:
-			color=saltColorPalette[std::rand() % saltColorPalette.size()];
+			color = saltColorPalette[std::rand() % saltColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for salt
 			break;
 		case CellType::Coal:
-			color=coalColorPalette[std::rand() % coalColorPalette.size()];
+			color = coalColorPalette[std::rand() % coalColorPalette.size()];
 			temperature = 20.0f; // Reset temperature for coal
 			break;
 		case CellType::Smoke:
@@ -113,8 +118,13 @@ struct Cell
 			color = iceColorPalette[std::rand() % iceColorPalette.size()];
 			temperature = -20.0f; // Set low temperature for ice
 			break;
+		case CellType::Magma:
+			color = magmaColorPalette[std::rand() % magmaColorPalette.size()];
+			temperature = 100.0f; // Set high temperature for magma
+			break;
 		default:
 			color=sf::Color::Black;
+			temperature = 20.0f; // Default temperature
 			break;
 		}
     }

@@ -7,29 +7,37 @@
 #include <imgui.h>
 #include <print>
 
-Grid::Grid(int rows, int cols) : rows(rows), cols(cols)
+Grid::Grid(int rows, int cols) 
+	: rows(rows), cols(cols),
+	m_vertices(sf::PrimitiveType::Triangles)
 {
-	m_grid.resize(ROWS * COLS);
+	m_grid.resize(static_cast<std::vector<Cell, std::allocator<Cell>>::size_type>(rows) * cols);
 
 	std::srand(static_cast<unsigned>(std::time(nullptr)));
 
-	for (int row = 0; row < ROWS; ++row)
-		for (int col = 0; col < COLS; ++col)
+	for (int row = 0; row < rows; ++row)
+		for (int col = 0; col < cols; ++col)
 			m_grid[getVectorIndex(row, col)].type = CellType::Air;
 }
 
 void Grid::draw(sf::RenderWindow& window)
 {
-	sf::RectangleShape cellShape({ CELL_SIZE,CELL_SIZE });
+	m_vertices.clear();
+	m_vertices.resize(static_cast<size_t>(rows) * cols * 6);
 
-	for (int row = 0; row < ROWS; ++row)
+	for (int row = 0; row < rows; ++row)
 	{
-		for (int col = 0; col < COLS; ++col)
+		for (int col = 0; col < cols; ++col)
 		{
 			Cell& cell = getCell(row, col);
 
+			if (cell.type == CellType::Air)
+				continue;
+
 			float x = static_cast<float>(col) * CELL_SIZE;
 			float y = static_cast<float>(row) * CELL_SIZE;
+
+			sf::Color cellColor;
 
 			if (seeTemperature)
 			{
@@ -39,14 +47,12 @@ void Grid::draw(sf::RenderWindow& window)
 					1.f
 				);
 
-				sf::Color heatColor;
-
 				if (heatFactor < 0.5f)
 				{
 					// Black -> Red
 					float t = heatFactor * 2.f;
 
-					heatColor = sf::Color(
+					cellColor = sf::Color(
 						static_cast<std::uint8_t>(255 * t),
 						0,
 						0
@@ -57,29 +63,41 @@ void Grid::draw(sf::RenderWindow& window)
 					// Red -> Yellow
 					float t = (heatFactor - 0.5f) * 2.f;
 
-					heatColor = sf::Color(
+					cellColor = sf::Color(
 						255,
 						static_cast<std::uint8_t>(255 * t),
 						0
 					);
 				}
-
-				cellShape.setFillColor(heatColor);
 			}
 			else
 			{
-				cellShape.setFillColor(cell.color);
+				cellColor = cell.color;
 			}
 
-			cellShape.setPosition({x,y});
-			window.draw(cellShape);
+			m_vertices.append(sf::Vertex({ x, y }, cellColor));
+			m_vertices.append(sf::Vertex({ x + CELL_SIZE, y }, cellColor));
+			m_vertices.append(sf::Vertex({ x + CELL_SIZE, y + CELL_SIZE }, cellColor));
+			m_vertices.append(sf::Vertex({ x, y }, cellColor));
+			m_vertices.append(sf::Vertex({ x + CELL_SIZE, y + CELL_SIZE }, cellColor));
+			m_vertices.append(sf::Vertex({ x, y + CELL_SIZE }, cellColor));
 		}
 	}
+
+	window.draw(m_vertices);
 }
 
 void Grid::update(sf::RenderWindow& window)
 {
-	if (!ImGui::GetIO().WantCaptureMouse && 
+	brushCell(window);
+	updateCell();
+	updateTemperature();
+	updateReactions();
+}
+
+void Grid::brushCell(sf::RenderWindow& window)
+{
+	if (!ImGui::GetIO().WantCaptureMouse &&
 		sf::Mouse::isButtonPressed(sf::Mouse::Button::Left))
 	{
 		sf::Vector2i mousePos = sf::Mouse::getPosition(window);
@@ -88,27 +106,37 @@ void Grid::update(sf::RenderWindow& window)
 		int mouseCol = mousePos.x / CELL_SIZE;
 
 		const int radius = brushSize;
-		for (int row = 0; row < ROWS; ++row)
+
+		int minRow = std::max(0, mouseRow - radius);
+		int maxRow = std::min(rows - 1, mouseRow + radius);
+
+		int minCol = std::max(0, mouseCol - radius);
+		int maxCol = std::min(cols - 1, mouseCol + radius);
+
+		for (int row = minRow; row <= maxRow; ++row)
 		{
-			for (int col = 0; col < COLS; ++col)
+			for (int col = minCol; col <= maxCol; ++col)
 			{
-				int distance = std::abs(mouseRow - row) + std::abs(mouseCol - col);
+				int distance =
+					std::abs(mouseRow - row) +
+					std::abs(mouseCol - col);
 
 				if (distance <= radius)
-				{
 					placeCell(row, col);
-				}
 			}
 		}
 	}
+}
 
-	for (int row = ROWS - 2; row >= 0; --row)
+void Grid::updateCell()
+{
+	for (int row = rows - 2; row >= 0; --row)
 	{
 		int leftToRight = std::rand() % 2;
 
 		if (leftToRight)
 		{
-			for (int col = 0; col < COLS; ++col)
+			for (int col = 0; col < cols; ++col)
 			{
 				Cell& currentCell = getCell(row, col);
 
@@ -117,7 +145,7 @@ void Grid::update(sf::RenderWindow& window)
 		}
 		else
 		{
-			for (int col = COLS - 1; col >= 0; --col)
+			for (int col = cols - 1; col >= 0; --col)
 			{
 				Cell& currentCell = getCell(row, col);
 
@@ -125,9 +153,6 @@ void Grid::update(sf::RenderWindow& window)
 			}
 		}
 	}
-
-	updateTemperature();
-	updateReactions();
 }
 
 void Grid::updateSand(int row, int col)
@@ -203,45 +228,7 @@ void Grid::updateAcid(int row, int col)
 	if(tryAcidEat(row, col))
 		return;
 
-	// Down
-	if (tryMove(row, col, 1, 0))
-		return;
-
-	// Diagonal
-	if (std::rand() % 2)
-	{
-		if (tryMove(row, col, 1, -1))
-			return;
-
-		if (tryMove(row, col, 1, 1))
-			return;
-	}
-	else
-	{
-		if (tryMove(row, col, 1, 1))
-			return;
-
-		if (tryMove(row, col, 1, -1))
-			return;
-	}
-
-	// Horizontal
-	if (std::rand() % 2)
-	{
-		if (tryMove(row, col, 0, -1))
-			return;
-
-		if (tryMove(row, col, 0, 1))
-			return;
-	}
-	else
-	{
-		if (tryMove(row, col, 0, 1))
-			return;
-
-		if (tryMove(row, col, 0, -1))
-			return;
-	}
+	updateWater(row, col);
 }
 
 void Grid::updateSmoke(int row, int col)
@@ -289,17 +276,17 @@ void Grid::updateSmoke(int row, int col)
 
 void Grid::updateTemperature()
 {
-	for (int row = 0; row < ROWS; ++row)
+	for (int row = 0; row < rows; ++row)
 	{
-		for (int col = 0; col < COLS; ++col)
+		for (int col = 0; col < cols; ++col)
 		{
 			Cell& cell = getCell(row, col);
 
-			if(cell.temperature>20.f)
+			if (cell.temperature > 20.f)
 				cell.temperature -= 0.1f; // Cool down over time
 
 			// Right
-			if (col < COLS - 1)
+			if (col < cols - 1)
 			{
 				Cell& other = getCell(row, col + 1);
 
@@ -311,7 +298,7 @@ void Grid::updateTemperature()
 			}
 
 			// Down
-			if (row < ROWS - 1)
+			if (row < rows - 1)
 			{
 				Cell& other = getCell(row + 1, col);
 
@@ -327,9 +314,9 @@ void Grid::updateTemperature()
 
 void Grid::updateReactions()
 {	
-	for (int row = 0; row < ROWS; ++row)
+	for (int row = 0; row < rows; ++row)
 	{
-		for (int col = 0; col < COLS; ++col)
+		for (int col = 0; col < cols; ++col)
 		{
 			Cell& cell = getCell(row, col);
 
@@ -338,7 +325,7 @@ void Grid::updateReactions()
 				cell.temperature = 2000.f;
 			}
 
-			if(cell.type==CellType::Ice && cell.temperature>0.f)
+			if (cell.type == CellType::Ice && cell.temperature > 0.f)
 			{
 				cell.setType(CellType::Water);
 			}
@@ -347,9 +334,15 @@ void Grid::updateReactions()
 			{
 				cell.setType(CellType::Ice);
 			}
+
 			if (cell.type == CellType::Water && cell.temperature > 100.f)
 			{
 				cell.setType(CellType::Smoke);
+			}
+
+			if (cell.type == CellType::Lava && cell.temperature < 1000.f)
+			{
+				cell.setType(CellType::Stone);
 			}
 		}
 	}
@@ -412,86 +405,13 @@ Cell& Grid::getCell(int row, int col)
 
 void Grid::clearGrid()
 {
-	for (int row = 0; row < ROWS; ++row)
-		for (int col = 0; col < COLS; ++col)
+	for (int row = 0; row < rows; ++row)
+	{
+		for (int col = 0; col < cols; ++col)
+		{
 			getCell(row, col).type = CellType::Air;
-}
-
-bool Grid::tryDownLeft(int row, int col, Cell& currentCell)
-{
-	if (col > 0)
-	{
-		Cell& target = getCell(row + 1, col - 1);
-
-		if (canMoveInto(currentCell, target))
-		{
-			std::swap(currentCell, target);
-			return true;
 		}
 	}
-
-	return false;
-}
-
-bool Grid::tryDownRight(int row, int col, Cell& currentCell)
-{
-	if (col < COLS - 1)
-	{
-		Cell& target = getCell(row + 1, col + 1);
-
-		if (canMoveInto(currentCell, target))
-		{
-			std::swap(currentCell, target);
-			return true;
-		}
-	}
-
-	return false;
-}
-
-bool Grid::tryLiquidLeft(int row, int col, Cell& currentCell)
-{
-	const int maxDistance = 4;
-
-	for (int distance = 1; distance <= maxDistance; ++distance)
-	{
-		int newCol = col - distance;
-
-		if (newCol < 0)
-			break;
-
-		Cell& target = getCell(row, newCol);
-
-		if (canMoveInto(currentCell, target))
-		{
-			std::swap(currentCell, target);
-			return true;
-		}
-	}
-	return false;
-}
-
-bool Grid::tryLiquidRight(int row, int col, Cell& currentCell)
-{
-	const int maxDistance = 4;
-
-	for (int distance = 1; distance <= maxDistance; ++distance)
-	{
-		int newCol = col + distance;
-
-		if (newCol >= COLS)
-			break;
-
-		Cell& target = getCell(row, newCol);
-
-		if (canMoveInto(currentCell, target))
-		{
-			std::swap(currentCell, target);
-			return true;
-		}
-	}
-
-	return false;
 }
 
 bool Grid::tryAcidEat(int row, int col)
@@ -519,11 +439,11 @@ bool Grid::tryMove(int row, int col, int dRow, int dCol)
 	int newRow = row + dRow;
 	int newCol = col + dCol;
 
-	if (newRow < 0 || newRow >= ROWS || newCol < 0 || newCol >= COLS)
+	if (newRow < 0 || newRow >= rows || newCol < 0 || newCol >= cols)
 		return false;
 
 	Cell& currentCell = getCell(row, col);
-	Cell& targetCell = getCell(newRow, newCol);
+	Cell& targetCell  = getCell(newRow, newCol);
 
 	if (canMoveInto(currentCell, targetCell))
 	{

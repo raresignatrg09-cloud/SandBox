@@ -46,7 +46,6 @@ void Game::draw()
 
 	m_grid.draw(m_window);
 
-#pragma region ImGui
 	ImGui::Begin("SandBox");
 
 	ImGui::Text(
@@ -65,31 +64,34 @@ void Game::draw()
 			}
 		};
 
-	setButton("Sand", CellType::Sand);
-	setButton("Water", CellType::Water);
-	setButton("Stone", CellType::Stone);
-	setButton("Acid", CellType::Acid);
-	setButton("Lava", CellType::Lava);
+	setButton("Sand",    CellType::Sand);
+	setButton("Water",   CellType::Water);
+	setButton("Stone",   CellType::Stone);
+	setButton("Acid",    CellType::Acid);
+	setButton("Lava",    CellType::Lava);
 	setButton("Mercury", CellType::Mercury);
-	setButton("Wood", CellType::Wood);
+	setButton("Wood",    CellType::Wood);
 	setButton("Sawdust", CellType::Sawdust);
-	setButton("Salt", CellType::Salt);
-	setButton("Coal", CellType::Coal);
-	setButton("Smoke", CellType::Smoke);
-	setButton("Fire", CellType::Fire);
-	setButton("Ice", CellType::Ice);
+	setButton("Salt",    CellType::Salt);
+	setButton("Coal",    CellType::Coal);
+	setButton("Smoke",   CellType::Smoke);
+	setButton("Fire",    CellType::Fire);
+	setButton("Ice",     CellType::Ice);
+	setButton("Magma",   CellType::Magma);
 
-	setButton("Eraser", CellType::Air);
+	setButton("Eraser",  CellType::Air);
 	
 	bool seeTemperature = m_grid.getSeeTemperature();
 	if (ImGui::Checkbox("See Temperature", &seeTemperature))
 	{
 		m_grid.setSeeTemperature(seeTemperature);
 	}
+
 	if (ImGui::SliderInt("Brush Size", &brushSize, 1, 10))
 	{
 		m_grid.setBrushSize(brushSize);
 	}
+
 	if (ImGui::Button("Clear Grid"))
 	{
 		m_grid.clearGrid();
@@ -99,7 +101,6 @@ void Game::draw()
 
 	// Render ImGui
 	ImGui::SFML::Render(m_window);
-#pragma endregion
 
 	m_window.display();
 }

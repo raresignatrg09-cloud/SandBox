@@ -35,6 +35,12 @@ namespace ColorPalette
 		sf::Color(200, 50, 0)
 	};
 
+	inline const std::vector<sf::Color> magmaColorPalette = {
+		sf::Color(255, 80, 0),
+		sf::Color(255, 40, 0),
+		sf::Color(200, 30, 0)
+	};
+
 	inline const std::vector<sf::Color> mercuryColorPalette = {
 		sf::Color(150, 150, 255),
 		sf::Color(100, 100, 200),
@@ -77,9 +83,9 @@ namespace ColorPalette
 		sf::Color(100, 100, 100)
 	};
 	inline const std::vector<sf::Color> fireColorPalette = {
-		sf::Color(255, 100, 0, 128),  // Orange with some transparency
-		sf::Color(255, 50, 0, 128),   // Reddish-orange with some transparency
-		sf::Color(200, 50, 0, 128)    // Darker orange with some transparency
+		sf::Color(240,127,19),
+		sf::Color(242,125,12),
+		sf::Color(255,191,0)
 	};
 	inline const std::vector<sf::Color> iceColorPalette = {
 		sf::Color(200, 200, 255),
